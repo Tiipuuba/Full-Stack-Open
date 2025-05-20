@@ -1,7 +1,34 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import persons from '../db.json'
+import noteService from './services/notes'
 
-const Person = ({ person }) => <p key={person.name}>{person.name}</p>
+const Person = ({ person }) => <p key={person.name}>{person.name} <button id={person.id} type="button" onClick={() => DeletePerson(person.id)}>del</button></p> 
+
+const DeletePerson = ( id ) => {
+  noteService
+    .deletePerson(id)
+    .then(response => {
+      console.log(response)
+  })
+}
+
+const UpdatePerson = ( newName, newNumber ) => {
+
+  const findPerson = persons.persons.find(person => person.name.toLowerCase().includes(newName.toLowerCase()))
+
+  const updatedPerson = {
+    name: newName,
+    number: newNumber,
+    id: findPerson.id
+  }
+
+  noteService
+    .updatePerson(updatedPerson)
+    .then(response => {
+      console.log(response)
+  })
+}
+
 
 const Filter = ({ persons, newFinder}) => {
   return (
@@ -38,17 +65,29 @@ const App = () => {
   const [newNumber, setNewNumber] = useState('')
   const [newFinder, setNewFinder] = useState('')
 
+  useEffect(() => {
+      noteService
+        .getAll()
+        .then(response => {
+          console.log(response)
+        })
+    }, [])
+
   const addContact = () => {
     const person = { name: newName, number: newNumber }
 
-    const exists = persons.some(person => person.name === newName)
-
-    if ( exists === true ) {
-      alert(`${newName} is already added to phonebook`)
-      return
+    if ( persons.persons.some(person => person.name === newName) ) {
+      UpdatePerson( newName, newNumber )
+      return 
     }
-    
-    setPersons(persons.concat(person))
+
+
+    noteService
+      .create(person)
+      .then(response => {
+        console.log(response)
+      })
+
     setNewName('')
     setNewNumber('')
   }
